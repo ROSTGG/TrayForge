@@ -1,0 +1,9 @@
+.git
+.github
+*.md
+*.cmd
+*.zip
+LICENSE
+.gitattributes
+.dockerignore
+Dockerfile

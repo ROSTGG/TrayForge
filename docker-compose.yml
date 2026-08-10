@@ -1,0 +1,17 @@
+# ─────────────────────────────────────────────────────
+# TrayForge — docker-compose для VPS
+# Запуск: docker compose up -d
+# Приложение будет доступно на порту 39282
+# ─────────────────────────────────────────────────────
+services:
+  trayforge:
+    image: ghcr.io/rostgg/trayforge:latest   # ← замени ROSTGG на свой GitHub username
+    container_name: trayforge
+    restart: unless-stopped
+    ports:
+      - "39282:80"           # внешний порт 39282 → nginx внутри на 80
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
