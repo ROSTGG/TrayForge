@@ -1,17 +1,20 @@
 # ─────────────────────────────────────────────────────
 # TrayForge — docker-compose для VPS
 # Запуск: docker compose up -d
-# Приложение будет доступно на порту 39282
+# Приложение доступно на https://m.dynet.com
 # ─────────────────────────────────────────────────────
 services:
   trayforge:
-    image: ghcr.io/rostgg/trayforge:latest   # ← замени ROSTGG на свой GitHub username
+    image: ghcr.io/rostgg/trayforge:latest
     container_name: trayforge
     restart: unless-stopped
     ports:
-      - "39282:80"           # внешний порт 39282 → nginx внутри на 80
+      - "80:80"              # HTTP → редирект на HTTPS
+      - "443:443"            # HTTPS с SSL
+    volumes:
+      - /etc/letsencrypt/archive/mscghost.dynet.com:/etc/nginx/ssl:ro   # монтируем сертификаты (read-only)
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      test: ["CMD", "wget", "--no-check-certificate", "-qO-", "https://localhost/"]
       interval: 30s
       timeout: 3s
       retries: 3
