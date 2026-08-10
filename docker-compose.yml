@@ -9,7 +9,7 @@ services:
     container_name: trayforge
     restart: unless-stopped
     ports:
-      - "39282:80"           # внешний порт 39282 → nginx внутри на 80
+      - "80:80"           # внешний порт 39282 → nginx внутри на 80
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 30s
