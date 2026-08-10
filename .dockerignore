@@ -7,3 +7,4 @@ LICENSE
 .gitattributes
 .dockerignore
 Dockerfile
+docker-compose.yml

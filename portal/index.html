@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MSCGhost — Панель приложений</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --bg-card-hover: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      --text-primary: #e8e8ed;
+      --text-secondary: #8a8a9a;
+      --text-muted: #55556a;
+      --accent-1: #6366f1;
+      --accent-2: #8b5cf6;
+      --accent-3: #a78bfa;
+      --glow-1: rgba(99, 102, 241, 0.15);
+      --glow-2: rgba(139, 92, 246, 0.12);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow--1 {
+      top: -200px;
+      left: -100px;
+      background: var(--glow-1);
+      animation: float 20s ease-in-out infinite;
+    }
+    .bg-glow--2 {
+      bottom: -200px;
+      right: -100px;
+      background: var(--glow-2);
+      animation: float 25s ease-in-out infinite reverse;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(30px, -40px); }
+      66% { transform: translate(-20px, 30px); }
+    }
+
+    /* ── Layout ── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 80px 24px 60px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .header__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-3);
+      margin-bottom: 24px;
+    }
+    .header__badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .header__title {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .header__subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── App Grid ── */
+    .apps {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      flex: 1;
+    }
+
+    .app-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+    .app-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--glow-1), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .app-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .app-card:hover::before { opacity: 1; }
+
+    .app-card__icon {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      box-shadow: 0 4px 16px var(--glow-1);
+    }
+
+    .app-card__name {
+      position: relative;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .app-card__desc {
+      position: relative;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .app-card__arrow {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent-3);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all 0.3s ease;
+    }
+    .app-card:hover .app-card__arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .app-card__arrow svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.3s ease;
+    }
+    .app-card:hover .app-card__arrow svg {
+      transform: translateX(4px);
+    }
+
+    /* ── Coming soon card ── */
+    .app-card--soon {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .app-card--soon .app-card__icon {
+      background: linear-gradient(135deg, #374151, #4b5563);
+      box-shadow: none;
+    }
+
+    .app-card__badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .container { padding: 48px 16px 40px; }
+      .header { margin-bottom: 40px; }
+      .apps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+
+  <div class="container">
+    <header class="header">
+      <div class="header__badge">
+        <span>Система онлайн</span>
+      </div>
+      <h1 class="header__title">MSCGhost Apps</h1>
+      <p class="header__subtitle">Панель инструментов и приложений. Выберите приложение для запуска.</p>
+    </header>
+
+    <section class="apps" id="apps">
+      <!-- Карточки приложений генерируются из JS -->
+    </section>
+
+    <footer class="footer">
+      &copy; 2026 MSCGhost &middot; mscghost.dynet.com
+    </footer>
+  </div>
+
+  <script>
+    // ── Конфигурация приложений ──
+    // Чтобы добавить новое приложение — добавь объект в массив
+    const apps = [
+      {
+        name: 'TrayForge',
+        desc: 'Параметрический генератор лотков для SMT-компонентов. Создаёт готовые STL-файлы для 3D-печати.',
+        icon: '⚙️',
+        url: '/trayforge/',
+        active: true,
+      },
+      {
+        name: 'Новое приложение',
+        desc: 'Здесь появится следующий инструмент. Следите за обновлениями.',
+        icon: '🚀',
+        url: '#',
+        active: false,
+      },
+    ];
+
+    const container = document.getElementById('apps');
+
+    apps.forEach((app, i) => {
+      const card = document.createElement('a');
+      card.href = app.active ? app.url : '#';
+      card.className = `app-card${app.active ? '' : ' app-card--soon'}`;
+      card.style.animationDelay = `${i * 80}ms`;
+
+      card.innerHTML = `
+        ${!app.active ? '<span class="app-card__badge">Скоро</span>' : ''}
+        <div class="app-card__icon">${app.icon}</div>
+        <div class="app-card__name">${app.name}</div>
+        <div class="app-card__desc">${app.desc}</div>
+        ${app.active ? `
+          <div class="app-card__arrow">
+            Открыть
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+        ` : ''}
+      `;
+
+      container.appendChild(card);
+    });
+  </script>
+</body>
+</html>
