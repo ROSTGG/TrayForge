@@ -143,10 +143,12 @@ function num(id) { return Math.max(0, Number(get(id).value) || 0); }
 function numMin(id, min) { return Math.max(min, Number(get(id).value) || min); }
 
 function values() {
+  const h = numMin('partH', 0.1);
+  const wallExtra = num('wallExtra');
   return {
     l:    numMin('partL', 0.1),
     w:    numMin('partW', 0.1),
-    h:    numMin('partH', 0.1),
+    h:    h,
     ll:   num('leadL'),
     lw:   num('leadW'),
     cols:  Math.max(1, Math.round(num('cols'))),
@@ -154,9 +156,8 @@ function values() {
     clear: numMin('clearance', 0.05),
     div:   numMin('divider', 0.5),
     base:  numMin('base', 0.6),
-    wallH: numMin('wallH', 1),
+    wallH: h + wallExtra,
     wallT: numMin('wallT', 0.8),
-    margin:num('margin'),
     vacuum:get('vacuum').checked
   };
 }
@@ -172,8 +173,8 @@ function dimensions(v) {
   const pw = fw + 2 * v.clear;          // pocket width
   return {
     fl, fw, pl, pw,
-    tl: 2 * (v.wallT + v.margin) + v.cols * pl + (v.cols - 1) * v.div,
-    tw: 2 * (v.wallT + v.margin) + v.rows * pw + (v.rows - 1) * v.div
+    tl: 2 * v.wallT + v.cols * pl + (v.cols - 1) * v.div,
+    tw: 2 * v.wallT + v.rows * pw + (v.rows - 1) * v.div
   };
 }
 
@@ -192,6 +193,7 @@ function update() {
   get('footprint').textContent = (v.ll > 0 || v.lw > 0)
     ? `${d.fl.toFixed(1)} × ${d.fw.toFixed(1)}`
     : `${v.l.toFixed(1)} × ${v.w.toFixed(1)} (без выводов)`;
+  get('wallTotal').textContent = `${v.wallH.toFixed(1)}`;
 }
 
 /* ── Применить пресет ── */
@@ -216,20 +218,20 @@ form.addEventListener('input', update);
 // Такой STL не содержит перекрывающихся внутренних стенок и корректно читается слайсерами.
 function stl(v) {
   const d = dimensions(v), hole = 1.2;
-  const xs = [0, v.wallT, v.wallT + v.margin], ys = [0, v.wallT, v.wallT + v.margin];
+  const xs = [0, v.wallT], ys = [0, v.wallT];
   for (let i = 0; i < v.cols; i++) {
-    xs.push(v.wallT + v.margin + i * (d.pl + v.div), v.wallT + v.margin + i * (d.pl + v.div) + d.pl);
-    if (i < v.cols - 1) xs.push(v.wallT + v.margin + i * (d.pl + v.div) + d.pl + v.div);
+    xs.push(v.wallT + i * (d.pl + v.div), v.wallT + i * (d.pl + v.div) + d.pl);
+    if (i < v.cols - 1) xs.push(v.wallT + i * (d.pl + v.div) + d.pl + v.div);
   }
   for (let i = 0; i < v.rows; i++) {
-    ys.push(v.wallT + v.margin + i * (d.pw + v.div), v.wallT + v.margin + i * (d.pw + v.div) + d.pw);
-    if (i < v.rows - 1) ys.push(v.wallT + v.margin + i * (d.pw + v.div) + d.pw + v.div);
+    ys.push(v.wallT + i * (d.pw + v.div), v.wallT + i * (d.pw + v.div) + d.pw);
+    if (i < v.rows - 1) ys.push(v.wallT + i * (d.pw + v.div) + d.pw + v.div);
   }
   xs.push(d.tl - v.wallT, d.tl);
   ys.push(d.tw - v.wallT, d.tw);
   if (v.vacuum) for (let i = 0; i < v.cols; i++) for (let j = 0; j < v.rows; j++) {
-    const cx = v.wallT + v.margin + i * (d.pl + v.div) + d.pl / 2;
-    const cy = v.wallT + v.margin + j * (d.pw + v.div) + d.pw / 2;
+    const cx = v.wallT + i * (d.pl + v.div) + d.pl / 2;
+    const cy = v.wallT + j * (d.pw + v.div) + d.pw / 2;
     xs.push(cx - hole / 2, cx + hole / 2);
     ys.push(cy - hole / 2, cy + hole / 2);
   }
@@ -237,12 +239,12 @@ function stl(v) {
   const X = uniq(xs), Y = uniq(ys), Z = [0, v.base, v.base + v.wallH], cells = [];
   const isHole = (x, y) => v.vacuum && Array.from({length: v.cols}, (_, i) => i).some(i =>
     Array.from({length: v.rows}, (_, j) => j).some(j => {
-      const cx = v.wallT + v.margin + i * (d.pl + v.div) + d.pl / 2;
-      const cy = v.wallT + v.margin + j * (d.pw + v.div) + d.pw / 2;
+      const cx = v.wallT + i * (d.pl + v.div) + d.pl / 2;
+      const cy = v.wallT + j * (d.pw + v.div) + d.pw / 2;
       return x > cx - hole / 2 && x < cx + hole / 2 && y > cy - hole / 2 && y < cy + hole / 2;
     }));
   const inDivider = (p, count, pocket) => Array.from({length: count - 1}, (_, i) => {
-    const edge = v.wallT + v.margin + i * (pocket + v.div) + pocket;
+    const edge = v.wallT + i * (pocket + v.div) + pocket;
     return p > edge && p < edge + v.div;
   }).some(Boolean);
   for (let k = 0; k < 2; k++) for (let i = 0; i < X.length - 1; i++) for (let j = 0; j < Y.length - 1; j++) {
