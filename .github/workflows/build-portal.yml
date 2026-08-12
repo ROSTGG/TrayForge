@@ -26,4 +26,4 @@ jobs:
         with:
           context: ./portal
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/trayforge-portal:main
+          tags: ghcr.io/rostgg/trayforge-portal:main

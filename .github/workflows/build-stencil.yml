@@ -26,4 +26,4 @@ jobs:
         with:
           context: ./stencil
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/trayforge-stencil:main
+          tags: ghcr.io/rostgg/trayforge-stencil:main
