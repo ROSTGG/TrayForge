@@ -1,7 +1,7 @@
-gerbonara>=1.6,<2
-shapely>=2.1,<3
-trimesh>=4.0,<6
-numpy>=1.26,<3
-fastapi>=0.115,<1
-uvicorn>=0.34,<1
-python-multipart>=0.0.20
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+numpy
+shapely
+trimesh
+gerbonara
