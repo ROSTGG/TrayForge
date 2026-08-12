@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,7 +9,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     :root {
       --bg-primary: #0a0a0f;
@@ -39,8 +46,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
       background-size: 60px 60px;
       pointer-events: none;
       z-index: 0;
@@ -56,22 +63,35 @@
       pointer-events: none;
       z-index: 0;
     }
+
     .bg-glow--1 {
       top: -200px;
       left: -100px;
       background: var(--glow-1);
       animation: float 20s ease-in-out infinite;
     }
+
     .bg-glow--2 {
       bottom: -200px;
       right: -100px;
       background: var(--glow-2);
       animation: float 25s ease-in-out infinite reverse;
     }
+
     @keyframes float {
-      0%, 100% { transform: translate(0, 0); }
-      33% { transform: translate(30px, -40px); }
-      66% { transform: translate(-20px, 30px); }
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      33% {
+        transform: translate(30px, -40px);
+      }
+
+      66% {
+        transform: translate(-20px, 30px);
+      }
     }
 
     /* ── Layout ── */
@@ -91,6 +111,7 @@
       text-align: center;
       margin-bottom: 64px;
     }
+
     .header__badge {
       display: inline-flex;
       align-items: center;
@@ -106,6 +127,7 @@
       color: var(--accent-3);
       margin-bottom: 24px;
     }
+
     .header__badge::before {
       content: '';
       width: 6px;
@@ -115,10 +137,19 @@
       box-shadow: 0 0 8px #34d399;
       animation: pulse 2s ease-in-out infinite;
     }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
     }
+
     .header__title {
       font-size: clamp(32px, 5vw, 48px);
       font-weight: 700;
@@ -129,6 +160,7 @@
       background-clip: text;
       margin-bottom: 12px;
     }
+
     .header__subtitle {
       font-size: 16px;
       color: var(--text-secondary);
@@ -159,6 +191,7 @@
       transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
     }
+
     .app-card::before {
       content: '';
       position: absolute;
@@ -168,13 +201,17 @@
       opacity: 0;
       transition: opacity 0.35s ease;
     }
+
     .app-card:hover {
       background: var(--bg-card-hover);
       border-color: var(--border-hover);
       transform: translateY(-4px);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     }
-    .app-card:hover::before { opacity: 1; }
+
+    .app-card:hover::before {
+      opacity: 1;
+    }
 
     .app-card__icon {
       position: relative;
@@ -219,15 +256,18 @@
       transform: translateX(-8px);
       transition: all 0.3s ease;
     }
+
     .app-card:hover .app-card__arrow {
       opacity: 1;
       transform: translateX(0);
     }
+
     .app-card__arrow svg {
       width: 16px;
       height: 16px;
       transition: transform 0.3s ease;
     }
+
     .app-card:hover .app-card__arrow svg {
       transform: translateX(4px);
     }
@@ -237,6 +277,7 @@
       opacity: 0.5;
       pointer-events: none;
     }
+
     .app-card--soon .app-card__icon {
       background: linear-gradient(135deg, #374151, #4b5563);
       box-shadow: none;
@@ -269,12 +310,21 @@
 
     /* ── Responsive ── */
     @media (max-width: 640px) {
-      .container { padding: 48px 16px 40px; }
-      .header { margin-bottom: 40px; }
-      .apps { grid-template-columns: 1fr; }
+      .container {
+        padding: 48px 16px 40px;
+      }
+
+      .header {
+        margin-bottom: 40px;
+      }
+
+      .apps {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="bg-grid"></div>
   <div class="bg-glow bg-glow--1"></div>
@@ -311,7 +361,7 @@
       },
       {
         name: 'Stencil Generator',
-        desc: 'Конвертер Gerber paste-mask в герметичный STL-трафарет. Загрузите .gtp / .gbp — получите готовый STL.',
+        desc: 'Конвертер Gerber paste-mask в герметичный STL-трафарет. Загрузите .gtp / .gbp — получите готовый STL. Приложение в разработке.',
         icon: '🔲',
         url: '/stencil/',
         active: true,
@@ -352,4 +402,5 @@
     });
   </script>
 </body>
+
 </html>
