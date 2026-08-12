@@ -1,97 +1,126 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stencil Generator — Gerber → STL</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StencilForge — Gerber Stencil Generator</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <main class="app-shell">
-    <header>
-      <div>
-        <p class="eyebrow">GERBER → STL ТРАФАРЕТ</p>
-        <h1>Stencil Generator</h1>
-      </div>
-      <p class="header-note">Загрузите Gerber paste-mask (.gtp, .gbp, .gbr) и получите герметичный STL трафарет.</p>
-    </header>
+  <div class="app-container">
+    <!-- Сайдбар параметров -->
+    <aside class="sidebar">
+      <header class="header">
+        <div class="logo-row">
+          <a href="/" class="back-link" title="Назад в портал">← Меню</a>
+          <div class="logo-title">StencilForge</div>
+        </div>
+        <div class="tagline">Генератор 3D-трафаретов из Gerber</div>
+      </header>
 
-    <section class="workspace">
-      <!-- Левая панель — параметры -->
-      <form id="stencil-form" class="panel controls">
-        <div class="section-title"><span>01</span><h2>Файл</h2></div>
-        <div id="dropzone" class="dropzone">
-          <svg class="dropzone-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M24 32V16m0 0l-8 8m8-8l8 8"/>
-            <rect x="4" y="4" width="40" height="40" rx="8"/>
-          </svg>
-          <p>Перетащите Gerber сюда<br><small>или нажмите для выбора</small></p>
-          <input type="file" id="gerber-file" accept=".gtp,.gbp,.gbr,.GTP,.GBP,.GBR" hidden />
-        </div>
-        <div id="file-info" class="file-info hidden">
-          <span id="file-name">—</span>
-          <button type="button" id="btn-clear" class="btn-clear" title="Убрать файл">✕</button>
-        </div>
-
-        <div class="section-title"><span>02</span><h2>Параметры трафарета</h2></div>
-        <div class="fields two">
-          <label>Толщина, мм<input id="thickness" type="number" value="0.12" step="0.01" min="0.05" max="1" /></label>
-          <label>Поле, мм<input id="margin" type="number" value="10" step="1" min="0" max="50" /></label>
-          <label>Скругление углов, мм<input id="corner-radius" type="number" value="2" step="0.5" min="0" max="20" /></label>
-          <label>Компенсация апертур, мм<input id="aperture-offset" type="number" value="0" step="0.01" min="-0.5" max="0.5" /></label>
-        </div>
-
-        <div class="section-title"><span>03</span><h2>Трансформация</h2></div>
-        <div class="fields two">
-          <label>Поворот, °<input id="rotate" type="number" value="0" step="90" min="0" max="360" /></label>
-          <label>Допуск дуг, мм<input id="arc-tolerance" type="number" value="0.01" step="0.005" min="0.001" max="0.1" /></label>
-        </div>
-        <div class="checkbox-row">
-          <label class="checkbox"><input id="mirror-x" type="checkbox" /> Зеркало X</label>
-          <label class="checkbox"><input id="mirror-y" type="checkbox" /> Зеркало Y</label>
-        </div>
-
-        <details class="advanced">
-          <summary>Фиксированный размер листа</summary>
-          <div class="fields two">
-            <label>Ширина, мм<input id="sheet-width" type="number" value="" step="1" min="0" placeholder="авто" /></label>
-            <label>Высота, мм<input id="sheet-height" type="number" value="" step="1" min="0" placeholder="авто" /></label>
+      <form id="stencil-form" onsubmit="return false;">
+        <!-- Секция 01: Gerber файл -->
+        <fieldset class="section">
+          <legend>01 Файл трафарета</legend>
+          <div class="upload-dropzone" id="dropzone">
+            <input type="file" id="gerber-file" accept=".gbr,.gtp,.gbp,.ger,.art" hidden>
+            <div class="upload-label">
+              <span class="upload-icon">📁</span>
+              <span id="file-name-display">Выберите или перетащите Gerber-файл</span>
+            </div>
           </div>
-        </details>
+        </fieldset>
 
+        <!-- Секция 02: Геометрия трафарета -->
+        <fieldset class="section">
+          <legend>02 Параметры пластины</legend>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="thickness">Толщина (мм)</label>
+              <input type="number" id="thickness" value="0.2" min="0.05" max="2.0" step="0.05">
+            </div>
+            <div class="field">
+              <label for="margin">Отступ рамки (мм)</label>
+              <input type="number" id="margin" value="5.0" min="0" max="50" step="0.5">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="pad-shrink">Уменьшение апертур (мм)</label>
+              <input type="number" id="pad-shrink" value="0.0" min="0" max="0.5" step="0.01">
+            </div>
+            <div class="field">
+              <label for="min-feature">Мин. размер (мм)</label>
+              <input type="number" id="min-feature" value="0.1" min="0.01" max="1.0" step="0.01">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Секция 03: Рамка и ориентация -->
+        <fieldset class="section">
+          <legend>03 Опции сборки</legend>
+
+          <div class="checkbox-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="mirror-x">
+              <span>Зеркалить по X (Bottom layer)</span>
+            </label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="add-frame" checked>
+              <span>Усиленный бортик</span>
+            </label>
+          </div>
+          <div class="field-row" id="frame-options">
+            <div class="field">
+              <label for="frame-height">Высота бортика (мм)</label>
+              <input type="number" id="frame-height" value="1.2" min="0.4" max="10.0" step="0.2">
+            </div>
+            <div class="field">
+              <label for="frame-width">Ширина бортика (мм)</label>
+              <input type="number" id="frame-width" value="3.0" min="1.0" max="20.0" step="0.5">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Кнопки действий -->
         <div class="actions">
-          <button type="button" id="btn-preview" disabled>Предпросмотр</button>
-          <button type="button" id="btn-download" class="primary" disabled>Скачать STL</button>
+          <button type="button" id="btn-preview" class="btn btn-secondary">Обновить превью</button>
+          <button type="button" id="btn-export" class="btn btn-primary">Скачать STL</button>
         </div>
       </form>
+    </aside>
 
-      <!-- Правая панель — превью -->
-      <section class="panel preview">
-        <div class="section-title"><span>ПРЕДПРОСМОТР</span><h2>SVG трафарета</h2></div>
-        <div id="preview-area" class="preview-area">
-          <p class="placeholder-text">Загрузите Gerber и нажмите «Предпросмотр»</p>
+    <!-- Основная область с превью -->
+    <main class="preview-area">
+      <div class="metrics-bar" id="metrics-bar">
+        <div class="metric-item">
+          <span class="metric-label">Размер платы:</span>
+          <span class="metric-val" id="metric-pcb">-- × -- мм</span>
         </div>
-        <div class="metrics">
-          <div><small>Апертур</small><strong id="m-apertures">—</strong></div>
-          <div><small>Размер листа</small><strong id="m-sheet">—</strong></div>
-          <div><small>Статус</small><strong id="m-status">—</strong></div>
+        <div class="metric-item">
+          <span class="metric-label">Итоговый трафарет:</span>
+          <span class="metric-val" id="metric-stencil">-- × -- мм</span>
         </div>
-        <div id="warnings" class="warnings hidden"></div>
-      </section>
-    </section>
+        <div class="metric-item">
+          <span class="metric-label">Апертур:</span>
+          <span class="metric-val" id="metric-count">0</span>
+        </div>
+      </div>
 
-    <footer>
-      <a href="/" class="back-link">← К списку приложений</a>
-    </footer>
-  </main>
-
-  <div id="loader" class="loader-overlay hidden">
-    <div class="spinner"></div>
-    <p id="loader-text">Обработка Gerber…</p>
+      <div class="canvas-wrapper">
+        <div id="loader" class="loader hidden">Обработка Gerber...</div>
+        <svg id="preview-svg" viewBox="0 0 500 500"></svg>
+      </div>
+    </main>
   </div>
 
   <script src="app.js"></script>
 </body>
+
 </html>
