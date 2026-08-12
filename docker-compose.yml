@@ -5,8 +5,7 @@
 services:
   # ── Портал + reverse proxy ──
   portal:
-    image: ghcr.io/rostgg/trayforge-portal:latest
-    build: ./portal
+    image: ghcr.io/rostgg/trayforge-portal:main
     container_name: portal
     restart: unless-stopped
     ports:
@@ -21,14 +20,12 @@ services:
 
   # ── TrayForge (статика) ──
   trayforge:
-    image: ghcr.io/rostgg/trayforge-app:latest
-    build: ./trayforge
+    image: ghcr.io/rostgg/trayforge-app:main
     container_name: trayforge
     restart: unless-stopped
 
   # ── Stencil Generator (Python API + фронтенд) ──
   stencil-api:
-    image: ghcr.io/rostgg/trayforge-stencil:latest
-    build: ./stencil
+    image: ghcr.io/rostgg/trayforge-stencil:main
     container_name: stencil-api
     restart: unless-stopped
