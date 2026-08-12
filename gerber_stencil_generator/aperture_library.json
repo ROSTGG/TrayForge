@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "presets": [
+    {"name": "Круг Ø0,5 мм", "shape": "circle", "diameter": 0.5},
+    {"name": "Круг Ø0,8 мм", "shape": "circle", "diameter": 0.8},
+    {"name": "Круг Ø1,0 мм", "shape": "circle", "diameter": 1.0},
+    {"name": "Круг Ø1,2 мм", "shape": "circle", "diameter": 1.2},
+    {"name": "Круг Ø1,5 мм", "shape": "circle", "diameter": 1.5},
+    {"name": "Круг Ø2,0 мм", "shape": "circle", "diameter": 2.0},
+
+    {"name": "Прямоугольник 0,6 × 0,6 мм", "shape": "rectangle", "width": 0.6, "height": 0.6},
+    {"name": "Прямоугольник 0,8 × 0,8 мм", "shape": "rectangle", "width": 0.8, "height": 0.8},
+    {"name": "Прямоугольник 1,0 × 1,0 мм", "shape": "rectangle", "width": 1.0, "height": 1.0},
+    {"name": "Прямоугольник 1,5 × 1,5 мм", "shape": "rectangle", "width": 1.5, "height": 1.5},
+    {"name": "Прямоугольник 2,0 × 1,0 мм", "shape": "rectangle", "width": 2.0, "height": 1.0},
+    {"name": "SMA / DO-214AC: 2,0 × 2,1 мм", "shape": "rectangle", "width": 2.0, "height": 2.1},
+
+    {"name": "Скруглённый 1,5 × 1,0 мм, R0,2", "shape": "rounded_rectangle", "width": 1.5, "height": 1.0, "radius": 0.2},
+    {"name": "Скруглённый 2,0 × 1,0 мм, R0,2", "shape": "rounded_rectangle", "width": 2.0, "height": 1.0, "radius": 0.2},
+    {"name": "Скруглённый 3,0 × 1,5 мм, R0,3", "shape": "rounded_rectangle", "width": 3.0, "height": 1.5, "radius": 0.3},
+
+    {"name": "Овал 1,5 × 0,8 мм", "shape": "obround", "width": 1.5, "height": 0.8},
+    {"name": "Овал 2,0 × 1,0 мм", "shape": "obround", "width": 2.0, "height": 1.0},
+    {"name": "Овал 3,0 × 1,5 мм", "shape": "obround", "width": 3.0, "height": 1.5}
+  ]
+}

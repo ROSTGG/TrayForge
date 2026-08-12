@@ -1,10 +1,8 @@
 .git
 .github
+gerber_stencil_generator/
 *.md
-*.cmd
-*.zip
 LICENSE
-.gitattributes
-.dockerignore
-Dockerfile
-docker-compose.yml
+*.zip
+*.cmd
+__pycache__
