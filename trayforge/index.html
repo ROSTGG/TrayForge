@@ -8,6 +8,7 @@
   <title>TrayForge — лотки для SMT</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <main class="app-shell">
     <header>
@@ -15,18 +16,17 @@
         <p class="eyebrow">ПАРАМЕТРИЧЕСКИЕ ЛОТКИ ДЛЯ SMT</p>
         <h1>TrayForge</h1>
       </div>
-        <p class="header-note">Все размеры — мм. Результат: готовый STL для отправки в слайсер.</p>
+      <p class="header-note">Все размеры — мм. Результат: готовый STL для отправки в слайсер.</p>
     </header>
 
     <section class="workspace">
       <form id="tray-form" class="panel controls">
-        <div class="section-title"><span>01</span><h2>Компонент</h2></div>
+        <div class="section-title"><span>01</span>
+          <h2>Компонент</h2>
+        </div>
         <label>Типовой корпус
           <div class="preset-row">
             <select id="preset" name="preset"></select>
-            <button type="button" id="btn-add" class="preset-btn" title="Добавить корпус">＋</button>
-            <button type="button" id="btn-edit" class="preset-btn" title="Редактировать корпус">✎</button>
-            <button type="button" id="btn-delete" class="preset-btn preset-btn--danger" title="Удалить корпус">✕</button>
           </div>
         </label>
         <div class="fields three">
@@ -40,27 +40,38 @@
         </div>
         <p class="hint">Выступ — расстояние от края корпуса до кончика вывода (на каждую сторону).</p>
 
-        <div class="section-title"><span>02</span><h2>Ячейки</h2></div>
+        <div class="section-title"><span>02</span>
+          <h2>Ячейки</h2>
+        </div>
         <div class="fields two">
           <label>Колонки<input id="cols" name="cols" type="number" value="10" min="1" max="50" /></label>
           <label>Ряды<input id="rows" name="rows" type="number" value="2" min="1" max="50" /></label>
-          <label>Зазор вокруг детали<input id="clearance" name="clearance" type="number" value="0.25" step="0.05" min="0.05" /></label>
-          <label>Перемычка между ячейками<input id="divider" name="divider" type="number" value="0.8" step="0.1" min="0.5" /></label>
+          <label>Зазор вокруг детали<input id="clearance" name="clearance" type="number" value="0.25" step="0.05"
+              min="0.05" /></label>
+          <label>Перемычка между ячейками<input id="divider" name="divider" type="number" value="0.8" step="0.1"
+              min="0.5" /></label>
         </div>
 
-        <div class="section-title"><span>03</span><h2>Лоток</h2></div>
+        <div class="section-title"><span>03</span>
+          <h2>Лоток</h2>
+        </div>
         <div class="fields three">
           <label>Толщина дна<input id="base" name="base" type="number" value="0.8" step="0.1" min="0.6" /></label>
-          <label>Запас высоты стенок<input id="wallExtra" name="wallExtra" type="number" value="0.5" step="0.1" min="0" /></label>
-          <label>Толщина внешней стенки<input id="wallT" name="wallT" type="number" value="1.0" step="0.1" min="0.8" /></label>
+          <label>Запас высоты стенок<input id="wallExtra" name="wallExtra" type="number" value="0.5" step="0.1"
+              min="0" /></label>
+          <label>Толщина внешней стенки<input id="wallT" name="wallT" type="number" value="1.0" step="0.1"
+              min="0.8" /></label>
         </div>
         <p class="hint">Высота стенок = высота корпуса + запас. Итого: <strong id="wallTotal">—</strong> мм.</p>
-        <label class="checkbox"><input id="vacuum" name="vacuum" type="checkbox" checked /> Вакуумные отверстия в дне ячеек</label>
+        <label class="checkbox"><input id="vacuum" name="vacuum" type="checkbox" checked /> Вакуумные отверстия в дне
+          ячеек</label>
         <div class="actions"><button type="button" id="download">Скачать STL</button></div>
       </form>
 
       <section class="panel preview" aria-live="polite">
-        <div class="section-title"><span>ПРЕДПРОСМОТР</span><h2>Схема лотка</h2></div>
+        <div class="section-title"><span>ПРЕДПРОСМОТР</span>
+          <h2>Схема лотка</h2>
+        </div>
         <div id="tray-preview" class="tray-preview"></div>
         <div class="metrics">
           <div><small>Габарит лотка</small><strong id="size">—</strong></div>
@@ -70,37 +81,15 @@
         </div>
         <details>
           <summary>Что входит в STL</summary>
-          <pre id="code">Дно, внешние стенки, перегородки между ячейками и сквозные квадратные вакуумные отверстия 1,2 × 1,2 мм (если включены).</pre>
+          <pre
+            id="code">Дно, внешние стенки, перегородки между ячейками и сквозные квадратные вакуумные отверстия 1,2 × 1,2 мм (если включены).</pre>
         </details>
       </section>
     </section>
     <footer>Проверьте посадку на одном образце: реальные корпуса и допуски печати отличаются.</footer>
   </main>
 
-  <!-- Модальное окно для добавления/редактирования корпуса -->
-  <div id="modal-overlay" class="modal-overlay hidden">
-    <div class="modal">
-      <h3 id="modal-title">Добавить корпус</h3>
-      <div class="modal-fields">
-        <label>Категория<input id="m-category" type="text" placeholder="Мои корпуса" /></label>
-        <label>Название<input id="m-name" type="text" placeholder="Мой компонент (10 × 5)" /></label>
-        <div class="fields three">
-          <label>Длина<input id="m-l" type="number" step="0.1" min="0.1" value="10" /></label>
-          <label>Ширина<input id="m-w" type="number" step="0.1" min="0.1" value="5" /></label>
-          <label>Высота<input id="m-h" type="number" step="0.1" min="0.1" value="1.5" /></label>
-        </div>
-        <div class="fields two">
-          <label>Выступ выводов L<input id="m-ll" type="number" step="0.1" min="0" value="0" /></label>
-          <label>Выступ выводов W<input id="m-lw" type="number" step="0.1" min="0" value="0" /></label>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" id="modal-save">Сохранить</button>
-        <button type="button" id="modal-cancel" class="secondary">Отмена</button>
-      </div>
-    </div>
-  </div>
-
   <script src="app.js"></script>
 </body>
+
 </html>
