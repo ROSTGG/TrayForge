@@ -1,0 +1,16 @@
+services:
+  stencil-forge:
+    build: .
+    container_name: stencil-forge
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      MAX_UPLOAD_MB: "25"
+      JOB_TTL_MINUTES: "60"
+    tmpfs:
+      - /tmp/gerber-stencil-jobs:size=512m,uid=10001,gid=10001,mode=0700
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
