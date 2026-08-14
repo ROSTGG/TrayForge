@@ -1,591 +1,98 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StencilForge — 3D Gerber Generator</title>
-  <style>
-    :root {
-      --bg-base: #0f172a;
-      --bg-panel: #1e293b;
-      --bg-input: #0f172a;
-      --accent: #10b981;
-      --accent-hover: #059669;
-      --accent-glow: rgba(16, 185, 129, 0.2);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --border-focus: #475569;
-      --font: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
-      font-family: var(--font);
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
-
-    /* Сайдбар */
-    .sidebar {
-      width: 400px;
-      background-color: var(--bg-panel);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      padding: 24px;
-      overflow-y: auto;
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
-      z-index: 10;
-    }
-
-    .header {
-      margin-bottom: 24px;
-    }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 13px;
-      margin-bottom: 12px;
-      transition: color 0.2s;
-    }
-
-    .back-link:hover {
-      color: var(--accent);
-    }
-
-    .logo-title {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text-main);
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .logo-title span {
-      color: var(--accent);
-    }
-
-    .tagline {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Секции формы */
-    .section {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      transition: border-color 0.3s;
-    }
-
-    .section:hover {
-      border-color: var(--border-focus);
-    }
-
-    .section legend {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 0 8px;
-      background: var(--bg-panel);
-      border-radius: 4px;
-    }
-
-    .field-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .field-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .field {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .field label {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    input[type="number"] {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-main);
-      padding: 10px 12px;
-      font-size: 14px;
-      outline: none;
-      transition: all 0.2s;
-    }
-
-    input[type="number"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    /* Дропзона */
-    .upload-dropzone {
-      border: 2px dashed var(--border);
-      border-radius: 10px;
-      padding: 24px 16px;
-      text-align: center;
-      cursor: pointer;
-      background: var(--bg-input);
-      transition: all 0.3s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .upload-dropzone:hover,
-    .upload-dropzone.dragover {
-      border-color: var(--accent);
-      background: rgba(16, 185, 129, 0.05);
-    }
-
-    .upload-icon {
-      font-size: 32px;
-      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
-    }
-
-    .upload-label {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .upload-label strong {
-      color: var(--text-main);
-    }
-
-    /* Чекбоксы */
-    .checkbox-row {
-      margin-bottom: 12px;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      cursor: pointer;
-      user-select: none;
-      color: var(--text-main);
-    }
-
-    .checkbox-label input[type="checkbox"] {
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--border);
-      border-radius: 4px;
-      background: var(--bg-input);
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
-    }
-
-    .checkbox-label input[type="checkbox"]:checked {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .checkbox-label input[type="checkbox"]:checked::after {
-      content: '✓';
-      position: absolute;
-      color: white;
-      font-size: 12px;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    /* Кнопки */
-    .actions {
-      margin-top: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 4px 12px var(--accent-glow);
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--text-main);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: var(--text-muted);
-    }
-
-    /* Область превью */
-    .preview-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-    }
-
-    .metrics-bar {
-      display: flex;
-      gap: 32px;
-      padding: 16px 32px;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .metric-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .metric-label {
-      color: var(--text-muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .metric-val {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .canvas-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      padding: 32px;
-    }
-
-    #preview-svg {
-      width: 100%;
-      height: 100%;
-      max-width: 800px;
-      max-height: 800px;
-      filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
-    }
-
-    /* Лоадер */
-    .loader {
-      position: absolute;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(4px);
-      color: var(--accent);
-      padding: 16px 32px;
-      border-radius: 30px;
-      border: 1px solid var(--border);
-      font-size: 14px;
-      font-weight: 600;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 3px solid rgba(16, 185, 129, 0.3);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .hidden {
-      display: none !important;
-    }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Создание герметичного STL-трафарета из Gerber paste-mask">
+  <title>Stencil Forge — Gerber в STL</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
-
 <body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Stencil Forge">
+      <span class="brand-mark">SF</span>
+      <span><b>Stencil Forge</b><small>Gerber → STL</small></span>
+    </a>
+    <div class="status"><span></span> Локальная обработка</div>
+  </header>
 
-  <!-- Сайдбар параметров -->
-  <aside class="sidebar">
-    <header class="header">
-      <a href="/" class="back-link">← Вернуться в меню</a>
-      <div class="logo-title">Stencil<span>Forge</span></div>
-      <div class="tagline">Генератор 3D-трафаретов из Gerber</div>
-    </header>
-
-    <form id="stencil-form" onsubmit="return false;">
-      <fieldset class="section">
-        <legend>01 Файл трафарета</legend>
-        <div class="upload-dropzone" id="dropzone">
-          <input type="file" id="gerber-file" accept=".gbr,.gtp,.gbp,.ger,.art" hidden>
-          <div class="upload-icon">📂</div>
-          <div class="upload-label">
-            <strong id="file-name-display">Нажмите или перетащите файл</strong><br>
-            Поддерживаются .gbr, .gtp, .ger
-          </div>
-        </div>
-      </fieldset>
-
-      <fieldset class="section">
-        <legend>02 Параметры пластины</legend>
-        <div class="field-row">
-          <div class="field">
-            <label for="thickness">Толщина (мм)</label>
-            <input type="number" id="thickness" value="0.2" min="0.05" max="2.0" step="0.05">
-          </div>
-          <div class="field">
-            <label for="margin">Отступ рамки (мм)</label>
-            <input type="number" id="margin" value="5.0" min="0" max="50" step="0.5">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="pad-shrink">Сужение апертур (мм)</label>
-            <input type="number" id="pad-shrink" value="0.0" min="0" max="0.5" step="0.01">
-          </div>
-          <div class="field">
-            <label for="min-feature">Мин. размер (мм)</label>
-            <input type="number" id="min-feature" value="0.1" min="0.01" max="1.0" step="0.01">
-          </div>
-        </div>
-      </fieldset>
-
-      <fieldset class="section">
-        <legend>03 Опции сборки</legend>
-        <div class="checkbox-row">
-          <label class="checkbox-label">
-            <input type="checkbox" id="mirror-x">
-            <span>Зеркалить по X (Bottom layer)</span>
-          </label>
-        </div>
-        <div class="checkbox-row">
-          <label class="checkbox-label">
-            <input type="checkbox" id="add-frame" checked>
-            <span>Усиленный бортик</span>
-          </label>
-        </div>
-        <div class="field-row" id="frame-options">
-          <div class="field">
-            <label for="frame-height">Высота бортика (мм)</label>
-            <input type="number" id="frame-height" value="1.2" min="0.4" max="10.0" step="0.2">
-          </div>
-          <div class="field">
-            <label for="frame-width">Ширина бортика (мм)</label>
-            <input type="number" id="frame-width" value="3.0" min="1.0" max="20.0" step="0.5">
-          </div>
-        </div>
-      </fieldset>
-
-      <div class="actions">
-        <button type="button" id="btn-preview" class="btn btn-secondary">
-          <span>👁️</span> Обновить превью
-        </button>
-        <button type="button" id="btn-export" class="btn btn-primary">
-          <span>⬇️</span> Скачать STL
-        </button>
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow">ПЕЧАТНЫЕ ПЛАТЫ · ОСНАСТКА</p>
+        <h1>Точный трафарет<br>из paste-слоя.</h1>
       </div>
+      <p class="lede">Загрузите Gerber, настройте геометрию и получите герметичную STL-модель, готовую к печати.</p>
+    </section>
+
+    <form id="converter" class="workspace">
+      <aside class="controls">
+        <section class="panel upload-panel">
+          <div class="section-title"><span>01</span><h2>Исходный файл</h2></div>
+          <label class="dropzone" id="dropzone">
+            <input id="file" name="file" type="file" accept=".gtp,.gbp,.gbr,.ger,.pho" required>
+            <span class="upload-icon">＋</span>
+            <b id="file-label">Перетащите Gerber сюда</b>
+            <small>или нажмите для выбора · до 25 МБ</small>
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="section-title"><span>02</span><h2>Геометрия листа</h2></div>
+          <div class="fields two">
+            <label>Толщина, мм<input name="thickness" type="number" value="0.12" min="0.01" step="0.01" required></label>
+            <label>Поле, мм<input name="margin" type="number" value="10" min="0" step="0.1" required></label>
+            <label>Радиус углов, мм<input name="corner_radius" type="number" value="2" min="0" step="0.1" required></label>
+            <label>Компенсация, мм<input name="aperture_offset" type="number" value="0" step="0.01" required></label>
+          </div>
+          <details>
+            <summary>Точный размер и допуски</summary>
+            <div class="fields two detail-fields">
+              <label>Ширина, мм<input name="sheet_width" type="number" min="0" step="0.1" placeholder="Авто"></label>
+              <label>Высота, мм<input name="sheet_height" type="number" min="0" step="0.1" placeholder="Авто"></label>
+              <label>Допуск дуг, мм<input name="arc_tolerance" type="number" value="0.01" min="0.001" step="0.001"></label>
+              <label>Мин. площадь, мм²<input name="min_opening_area" type="number" value="0" min="0" step="0.01"></label>
+              <label>Поворот, °<input name="rotate" type="number" value="0" step="1"></label>
+            </div>
+          </details>
+          <div class="toggles">
+            <label><input name="mirror_x" type="checkbox"><span></span>Зеркально X</label>
+            <label><input name="mirror_y" type="checkbox"><span></span>Зеркально Y</label>
+            <label><input name="center_z" type="checkbox"><span></span>Центр по Z</label>
+          </div>
+        </section>
+
+        <button id="submit" class="primary" type="submit"><span>Построить трафарет</span><i>→</i></button>
+        <p class="privacy">Файлы хранятся временно и удаляются автоматически.</p>
+      </aside>
+
+      <section class="result panel" aria-live="polite">
+        <div class="result-head">
+          <div class="section-title"><span>03</span><h2>Предпросмотр</h2></div>
+          <div id="result-actions" class="actions hidden">
+            <a id="download-svg" class="secondary" download>SVG</a>
+            <a id="download-json" class="secondary" download>JSON</a>
+            <a id="download-stl" class="download" download>Скачать STL <b>↓</b></a>
+          </div>
+        </div>
+        <div id="preview" class="preview empty">
+          <div class="empty-state">
+            <div class="grid-icon"><i></i><i></i><i></i><i></i></div>
+            <b>Здесь появится трафарет</b>
+            <span>Загрузите paste-слой и запустите построение</span>
+          </div>
+        </div>
+        <div id="metrics" class="metrics hidden">
+          <div><span>Размер листа</span><b id="size-metric">—</b></div>
+          <div><span>Апертуры</span><b id="openings-metric">—</b></div>
+          <div><span>Сетка</span><b id="mesh-metric">—</b></div>
+          <div><span>Проверка STL</span><b id="water-metric" class="good">—</b></div>
+        </div>
+        <div id="message" class="message hidden"></div>
+      </section>
     </form>
-  </aside>
-
-  <!-- Основная область с превью -->
-  <main class="preview-area">
-    <div class="metrics-bar" id="metrics-bar">
-      <div class="metric-item">
-        <span class="metric-label">Размер платы</span>
-        <span class="metric-val" id="metric-pcb">-- × -- мм</span>
-      </div>
-      <div class="metric-item">
-        <span class="metric-label">Итоговый трафарет</span>
-        <span class="metric-val" id="metric-stencil">-- × -- мм</span>
-      </div>
-      <div class="metric-item">
-        <span class="metric-label">Апертур</span>
-        <span class="metric-val" id="metric-count">0</span>
-      </div>
-    </div>
-
-    <div class="canvas-wrapper">
-      <div id="loader" class="loader hidden">
-        <div class="spinner"></div>
-        <span id="loader-text">Обработка Gerber...</span>
-      </div>
-      <svg id="preview-svg" viewBox="0 0 500 500"></svg>
-    </div>
   </main>
-
-  <script>
-    let currentFile = null;
-
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('gerber-file');
-    const fileNameDisplay = document.getElementById('file-name-display');
-    const btnPreview = document.getElementById('btn-preview');
-    const btnExport = document.getElementById('btn-export');
-    const loader = document.getElementById('loader');
-    const loaderText = document.getElementById('loader-text');
-    const previewSvg = document.getElementById('preview-svg');
-
-    // Drag & Drop
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
-    });
-
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
-    });
-
-    function handleFile(file) {
-      currentFile = file;
-      fileNameDisplay.textContent = file.name;
-      loadPreview();
-    }
-
-    function getFormData() {
-      const data = new FormData();
-      if (currentFile) data.append('file', currentFile);
-      data.append('thickness', document.getElementById('thickness').value);
-      data.append('margin', document.getElementById('margin').value);
-      data.append('pad_shrink', document.getElementById('pad-shrink').value);
-      data.append('min_feature', document.getElementById('min-feature').value);
-      data.append('mirror_x', document.getElementById('mirror-x').checked);
-      data.append('add_frame', document.getElementById('add-frame').checked);
-      data.append('frame_height', document.getElementById('frame-height').value);
-      data.append('frame_width', document.getElementById('frame-width').value);
-      return data;
-    }
-
-    async function loadPreview() {
-      if (!currentFile) return;
-
-      loaderText.textContent = 'Обработка Gerber...';
-      loader.classList.remove('hidden');
-
-      try {
-        // ИСПОЛЬЗУЕМ ОТНОСИТЕЛЬНЫЙ ПУТЬ "api/preview" вместо "/api/preview"
-        const res = await fetch('api/preview', {
-          method: 'POST',
-          body: getFormData()
-        });
-
-        if (!res.ok) throw new Error('Ошибка генерации превью');
-
-        const data = await res.json();
-
-        previewSvg.innerHTML = data.svg_content;
-        if (data.view_box) previewSvg.setAttribute('viewBox', data.view_box);
-
-        document.getElementById('metric-pcb').textContent = `${data.pcb_w} × ${data.pcb_h} мм`;
-        document.getElementById('metric-stencil').textContent = `${data.stencil_w} × ${data.stencil_h} мм`;
-        document.getElementById('metric-count').textContent = data.aperture_count;
-      } catch (err) {
-        alert(err.message);
-      } finally {
-        loader.classList.add('hidden');
-      }
-    }
-
-    async function exportSTL() {
-      if (!currentFile) { alert('Сначала загрузите Gerber-файл'); return; }
-
-      loaderText.textContent = 'Генерация 3D STL (может занять время)...';
-      loader.classList.remove('hidden');
-
-      try {
-        // ИСПОЛЬЗУЕМ ОТНОСИТЕЛЬНЫЙ ПУТЬ "api/convert"
-        const res = await fetch('api/convert', {
-          method: 'POST',
-          body: getFormData()
-        });
-
-        if (!res.ok) throw new Error('Ошибка создания STL');
-
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = currentFile.name.replace(/\.[^/.]+$/, "") + "_stencil.stl";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } catch (err) {
-        alert(err.message);
-      } finally {
-        loader.classList.add('hidden');
-      }
-    }
-
-    btnPreview.addEventListener('click', loadPreview);
-    btnExport.addEventListener('click', exportSTL);
-  </script>
+  <footer><span>Stencil Forge v1.0</span><span>Расчёт в миллиметрах · STL Binary</span></footer>
+  <script src="/app.js" defer></script>
 </body>
-
 </html>

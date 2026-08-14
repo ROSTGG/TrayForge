@@ -1,121 +1,70 @@
-let currentFile = null;
+const form = document.querySelector('#converter');
+const fileInput = document.querySelector('#file');
+const dropzone = document.querySelector('#dropzone');
+const fileLabel = document.querySelector('#file-label');
+const preview = document.querySelector('#preview');
+const message = document.querySelector('#message');
+const submit = document.querySelector('#submit');
 
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('gerber-file');
-const fileNameDisplay = document.getElementById('file-name-display');
-const btnPreview = document.getElementById('btn-preview');
-const btnExport = document.getElementById('btn-export');
-const loader = document.getElementById('loader');
-const previewSvg = document.getElementById('preview-svg');
-
-// Drag & drop обработчики
-dropzone.addEventListener('click', () => fileInput.click());
-
-dropzone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropzone.classList.add('dragover');
-});
-
-dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-
-dropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropzone.classList.remove('dragover');
-  if (e.dataTransfer.files.length > 0) {
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
-
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length > 0) {
-    handleFile(fileInput.files[0]);
-  }
-});
-
-function handleFile(file) {
-  currentFile = file;
-  fileNameDisplay.textContent = file.name;
-  loadPreview();
+function showFile(file) {
+  if (!file) return;
+  fileLabel.textContent = file.name;
+  dropzone.classList.add('has-file');
 }
 
-function getFormData() {
-  const data = new FormData();
-  if (currentFile) data.append('file', currentFile);
-  data.append('thickness', document.getElementById('thickness').value);
-  data.append('margin', document.getElementById('margin').value);
-  data.append('pad_shrink', document.getElementById('pad-shrink').value);
-  data.append('min_feature', document.getElementById('min-feature').value);
-  data.append('mirror_x', document.getElementById('mirror-x').checked);
-  data.append('add_frame', document.getElementById('add-frame').checked);
-  data.append('frame_height', document.getElementById('frame-height').value);
-  data.append('frame_width', document.getElementById('frame-width').value);
-  return data;
+fileInput.addEventListener('change', () => showFile(fileInput.files[0]));
+['dragenter', 'dragover'].forEach(event => dropzone.addEventListener(event, e => {
+  e.preventDefault(); dropzone.classList.add('drag');
+}));
+['dragleave', 'drop'].forEach(event => dropzone.addEventListener(event, e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+}));
+dropzone.addEventListener('drop', e => {
+  if (!e.dataTransfer.files.length) return;
+  const transfer = new DataTransfer();
+  transfer.items.add(e.dataTransfer.files[0]);
+  fileInput.files = transfer.files;
+  showFile(fileInput.files[0]);
+});
+
+function setBusy(isBusy) {
+  submit.disabled = isBusy;
+  submit.querySelector('span').textContent = isBusy ? 'Строим геометрию…' : 'Построить трафарет';
+  preview.classList.toggle('loading', isBusy);
 }
 
-async function loadPreview() {
-  if (!currentFile) return;
+function showError(text) {
+  message.textContent = text;
+  message.classList.remove('hidden');
+}
 
-  loader.classList.remove('hidden');
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  message.classList.add('hidden');
+  document.querySelector('#result-actions').classList.add('hidden');
+  if (!fileInput.files.length) { showError('Выберите Gerber-файл.'); return; }
+  setBusy(true);
   try {
-    const res = await fetch('/api/preview', {
-      method: 'POST',
-      body: getFormData()
-    });
+    const response = await fetch('/api/convert', { method: 'POST', body: new FormData(form) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Не удалось построить трафарет.');
 
-    if (!res.ok) throw new Error('Ошибка генерации превью');
-
-    const data = await res.json();
-
-    // Отрисовка SVG превью
-    previewSvg.innerHTML = data.svg_content;
-    if (data.view_box) {
-      previewSvg.setAttribute('viewBox', data.view_box);
-    }
-
-    // Обновление метрик
-    document.getElementById('metric-pcb').textContent = `${data.pcb_w} × ${data.pcb_h} мм`;
-    document.getElementById('metric-stencil').textContent = `${data.stencil_w} × ${data.stencil_h} мм`;
-    document.getElementById('metric-count').textContent = data.aperture_count;
-  } catch (err) {
-    alert(err.message);
+    preview.innerHTML = data.preview_svg;
+    preview.classList.remove('empty');
+    const r = data.report;
+    document.querySelector('#size-metric').textContent = `${r.sheet_width_mm.toFixed(2)} × ${r.sheet_height_mm.toFixed(2)} × ${r.thickness_mm.toFixed(2)} мм`;
+    document.querySelector('#openings-metric').textContent = `${r.opening_count} · ${r.opening_area_mm2.toFixed(1)} мм²`;
+    document.querySelector('#mesh-metric').textContent = `${r.vertex_count} вершин`;
+    document.querySelector('#water-metric').textContent = r.watertight ? 'ГЕРМЕТИЧЕН ✓' : 'НЕ ПРОЙДЕНА';
+    document.querySelector('#metrics').classList.remove('hidden');
+    document.querySelector('#download-stl').href = data.downloads.stl;
+    document.querySelector('#download-json').href = data.downloads.report;
+    document.querySelector('#download-svg').href = data.downloads.preview;
+    document.querySelector('#result-actions').classList.remove('hidden');
+    if (r.warnings?.length) showError(r.warnings.join(' '));
+  } catch (error) {
+    showError(error.message);
   } finally {
-    loader.classList.add('hidden');
+    setBusy(false);
   }
-}
-
-async function exportSTL() {
-  if (!currentFile) {
-    alert('Сначала загрузите Gerber-файл');
-    return;
-  }
-
-  loader.textContent = 'Генерация STL...';
-  loader.classList.remove('hidden');
-
-  try {
-    const res = await fetch('/api/convert', {
-      method: 'POST',
-      body: getFormData()
-    });
-
-    if (!res.ok) throw new Error('Ошибка создания STL');
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = currentFile.name.replace(/\.[^/.]+$/, "") + "_stencil.stl";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    alert(err.message);
-  } finally {
-    loader.textContent = 'Обработка Gerber...';
-    loader.classList.add('hidden');
-  }
-}
-
-btnPreview.addEventListener('click', loadPreview);
-btnExport.addEventListener('click', exportSTL);
+});

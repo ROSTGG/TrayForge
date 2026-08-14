@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.stl
+.git/
+.pytest_cache/
+tests/
+README_RU.md
+install_and_run.bat
+run_gui.bat
+stencil_gui.py
+test_*.py
