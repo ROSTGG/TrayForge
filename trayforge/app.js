@@ -94,27 +94,7 @@ const builtinPresets = {
   custom: { category:'Свой размер', name:'Свой размер', l:10, w:4, h:1.8 }
 };
 
-/* ── Пользовательские пресеты из localStorage ── */
-const STORAGE_KEY = 'trayforge_custom_presets';
-
-function loadCustomPresets() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-  catch { return {}; }
-}
-
-function saveCustomPresets(custom) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
-}
-
-/* Объединяем встроенные + пользовательские */
-let presets = {};
-function mergePresets() {
-  presets = {};
-  Object.assign(presets, builtinPresets);
-  const custom = loadCustomPresets();
-  Object.assign(presets, custom);
-}
-mergePresets();
+const presets = builtinPresets;
 
 /* ── DOM ── */
 const form = document.querySelector('#tray-form');
@@ -167,10 +147,10 @@ function values() {
    pl, pw  — внутренний размер ячейки (габарит + зазор)
    tl, tw  — общий размер лотка */
 function dimensions(v) {
-  const fl = v.l + 2 * v.ll;            // footprint length
-  const fw = v.w + 2 * v.lw;            // footprint width
-  const pl = fl + 2 * v.clear;          // pocket length
-  const pw = fw + 2 * v.clear;          // pocket width
+  const fl = v.l + 2 * v.ll;
+  const fw = v.w + 2 * v.lw;
+  const pl = fl + 2 * v.clear;
+  const pw = fw + 2 * v.clear;
   return {
     fl, fw, pl, pw,
     tl: 2 * v.wallT + v.cols * pl + (v.cols - 1) * v.div,
@@ -205,17 +185,13 @@ function applyPreset() {
   get('partH').value = p.h;
   get('leadL').value = p.ll || 0;
   get('leadW').value = p.lw || 0;
-  // Кнопка удаления доступна только для пользовательских пресетов
-  get('btn-delete').disabled = !!builtinPresets[get('preset').value];
   update();
 }
 
 get('preset').addEventListener('change', applyPreset);
 form.addEventListener('input', update);
 
-/* ── Генерация STL (без изменений — использует pl/pw из dimensions) ── */
-// Сетка прямоугольных объёмов, из которой записываются только внешние грани.
-// Такой STL не содержит перекрывающихся внутренних стенок и корректно читается слайсерами.
+/* ── Генерация STL ── */
 function stl(v) {
   const d = dimensions(v), hole = 1.2;
   const xs = [0, v.wallT], ys = [0, v.wallT];
@@ -286,102 +262,6 @@ get('download').addEventListener('click', () => {
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
-
-/* ══════════════════════════════════════════════════════════
-   Управление пользовательскими пресетами (добавить / редактировать / удалить)
-   ══════════════════════════════════════════════════════════ */
-const overlay = get('modal-overlay');
-let editingId = null;  // null → добавление, строка → редактирование
-
-function openModal(mode) {
-  editingId = null;
-  if (mode === 'edit') {
-    const id = get('preset').value;
-    const p = presets[id];
-    if (!p) return;
-    editingId = id;
-    get('modal-title').textContent = 'Редактировать корпус';
-    get('m-category').value = p.category;
-    get('m-name').value = p.name;
-    get('m-l').value = p.l;
-    get('m-w').value = p.w;
-    get('m-h').value = p.h;
-    get('m-ll').value = p.ll || 0;
-    get('m-lw').value = p.lw || 0;
-  } else {
-    get('modal-title').textContent = 'Добавить корпус';
-    get('m-category').value = 'Мои корпуса';
-    get('m-name').value = '';
-    get('m-l').value = 10;
-    get('m-w').value = 5;
-    get('m-h').value = 1.5;
-    get('m-ll').value = 0;
-    get('m-lw').value = 0;
-  }
-  overlay.classList.remove('hidden');
-}
-
-function closeModal() {
-  overlay.classList.add('hidden');
-}
-
-function generateId(name) {
-  return 'user_' + name.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30) + '_' + Date.now().toString(36);
-}
-
-function saveModal() {
-  const name = get('m-name').value.trim();
-  if (!name) { get('m-name').focus(); return; }
-
-  const data = {
-    category: get('m-category').value.trim() || 'Мои корпуса',
-    name:     name,
-    l:  Math.max(0.1, parseFloat(get('m-l').value) || 0.1),
-    w:  Math.max(0.1, parseFloat(get('m-w').value) || 0.1),
-    h:  Math.max(0.1, parseFloat(get('m-h').value) || 0.1),
-    ll: Math.max(0, parseFloat(get('m-ll').value) || 0),
-    lw: Math.max(0, parseFloat(get('m-lw').value) || 0),
-  };
-  // Убираем нулевые ll/lw для чистоты
-  if (data.ll === 0) delete data.ll;
-  if (data.lw === 0) delete data.lw;
-
-  const custom = loadCustomPresets();
-  let id;
-
-  if (editingId) {
-    id = editingId;
-    // Если редактируем встроенный — сохраняем как кастомный с тем же ID (перекрывает)
-    custom[id] = data;
-  } else {
-    id = generateId(name);
-    custom[id] = data;
-  }
-
-  saveCustomPresets(custom);
-  mergePresets();
-  rebuildSelect(id);
-  closeModal();
-}
-
-function deletePreset() {
-  const id = get('preset').value;
-  if (builtinPresets[id]) return; // нельзя удалить встроенный
-  if (!confirm(`Удалить «${presets[id]?.name}»?`)) return;
-
-  const custom = loadCustomPresets();
-  delete custom[id];
-  saveCustomPresets(custom);
-  mergePresets();
-  rebuildSelect('sot223');
-}
-
-get('btn-add').addEventListener('click', () => openModal('add'));
-get('btn-edit').addEventListener('click', () => openModal('edit'));
-get('btn-delete').addEventListener('click', deletePreset);
-get('modal-save').addEventListener('click', saveModal);
-get('modal-cancel').addEventListener('click', closeModal);
-overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
 /* Инициализация */
 applyPreset();
