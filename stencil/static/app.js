@@ -45,7 +45,7 @@ form.addEventListener('submit', async event => {
   if (!fileInput.files.length) { showError('Выберите Gerber-файл.'); return; }
   setBusy(true);
   try {
-    const response = await fetch('/api/convert', { method: 'POST', body: new FormData(form) });
+    const response = await fetch('api/convert', { method: 'POST', body: new FormData(form) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || 'Не удалось построить трафарет.');
 
