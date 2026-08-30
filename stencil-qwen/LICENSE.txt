@@ -1,0 +1,2 @@
+This project source code is provided to the user for unrestricted personal and commercial use.
+Third-party dependencies retain their respective licenses.
