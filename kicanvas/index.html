@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerber / KiCad Viewer — TrayForge</title>
+  <meta name="description" content="Просмотр Gerber и KiCad-файлов прямо в браузере. Поддерживаются .kicad_pcb, .kicad_sch, Gerber и zip-архивы." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- KiCanvas web component -->
+  <script type="module" src="https://kicanvas.org/kicanvas/kicanvas.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --indigo: #6366f1;
+      --purple: #7c3aed;
+      --cyan:   #06b6d4;
+      --body:   #0f172a;
+      --surface:#1e293b;
+      --border: #334155;
+      --text:   #e2e8f0;
+      --sub:    #94a3b8;
+      --muted:  #475569;
+    }
+
+    html { height: 100%; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--body);
+      color: var(--text);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .topbar__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--sub);
+      font-size: .8rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s, color .2s;
+      font-family: inherit;
+    }
+    .topbar__back:hover { border-color: var(--indigo); color: var(--indigo); }
+    .topbar__back svg { width: 14px; height: 14px; }
+
+    .topbar__title {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .topbar__badge {
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 100px;
+      background: rgba(99,102,241,.15);
+      color: var(--indigo);
+      border: 1px solid rgba(99,102,241,.3);
+    }
+
+    .topbar__file-btn {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--indigo), var(--purple));
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      font-family: inherit;
+    }
+    .topbar__file-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .topbar__file-btn svg { width: 15px; height: 15px; }
+
+    #file-input { display: none; }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 40px 20px;
+      border: 2px dashed var(--border);
+      border-radius: 20px;
+      margin: 24px;
+      cursor: pointer;
+      transition: border-color .25s, background .25s;
+    }
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--indigo);
+      background: rgba(99,102,241,.06);
+    }
+
+    .drop-zone__icon {
+      width: 72px; height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--indigo), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px;
+      box-shadow: 0 8px 24px rgba(99,102,241,.3);
+    }
+
+    .drop-zone__title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      text-align: center;
+    }
+    .drop-zone__sub {
+      font-size: .875rem;
+      color: var(--sub);
+      text-align: center;
+      max-width: 420px;
+      line-height: 1.65;
+    }
+
+    .drop-zone__formats {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    }
+    .drop-zone__fmt {
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--sub);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Viewer container ── */
+    .viewer-wrap {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+    .viewer-wrap.visible { display: flex; }
+
+    .viewer-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem;
+      color: var(--sub);
+      flex-shrink: 0;
+    }
+    .viewer-toolbar__name {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .viewer-toolbar__close {
+      margin-left: auto;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent;
+      color: var(--sub);
+      font-size: .78rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .2s, color .2s;
+    }
+    .viewer-toolbar__close:hover { border-color: #ef4444; color: #ef4444; }
+
+    kicanvas-embed {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: block;
+    }
+
+    /* ── Error toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #ef4444;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: .85rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      z-index: 100;
+      max-width: 400px;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="/" class="topbar__back" title="На главную">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Назад
+    </a>
+    <span class="topbar__title">Gerber / KiCad Viewer</span>
+    <span class="topbar__badge">KiCanvas</span>
+
+    <label class="topbar__file-btn" for="file-input" title="Открыть файл">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Открыть файл
+    </label>
+    <input id="file-input" type="file" accept=".kicad_pcb,.kicad_sch,.kicad_pro,.gbr,.gtl,.gbl,.gto,.gbo,.gts,.gbs,.gko,.drl,.zip" multiple />
+  </header>
+
+  <!-- Drop zone -->
+  <div class="drop-zone" id="drop-zone">
+    <div class="drop-zone__icon">📐</div>
+    <div class="drop-zone__title">Перетащите файл сюда</div>
+    <p class="drop-zone__sub">
+      Поддерживаются KiCad PCB и схемы, Gerber-файлы и ZIP-архивы.<br>
+      Файлы обрабатываются локально — ничего не отправляется на сервер.
+    </p>
+    <div class="drop-zone__formats">
+      <span class="drop-zone__fmt">.kicad_pcb</span>
+      <span class="drop-zone__fmt">.kicad_sch</span>
+      <span class="drop-zone__fmt">.gbr / .gtl / .gbl</span>
+      <span class="drop-zone__fmt">.zip</span>
+      <span class="drop-zone__fmt">.drl</span>
+    </div>
+  </div>
+
+  <!-- Viewer -->
+  <div class="viewer-wrap" id="viewer-wrap">
+    <div class="viewer-toolbar">
+      Просмотр:&nbsp;<span class="viewer-toolbar__name" id="file-name">—</span>
+      <button class="viewer-toolbar__close" id="close-btn">✕ Закрыть</button>
+    </div>
+    <kicanvas-embed id="kicanvas" controls="full"></kicanvas-embed>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const dropZone   = document.getElementById('drop-zone');
+    const viewerWrap = document.getElementById('viewer-wrap');
+    const fileInput  = document.getElementById('file-input');
+    const kicanvas   = document.getElementById('kicanvas');
+    const fileNameEl = document.getElementById('file-name');
+    const closeBtn   = document.getElementById('close-btn');
+    const toast      = document.getElementById('toast');
+
+    let toastTimer;
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    function openFiles(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const url  = URL.createObjectURL(file);
+      fileNameEl.textContent = file.name;
+      kicanvas.setAttribute('src', url);
+      dropZone.style.display   = 'none';
+      viewerWrap.classList.add('visible');
+    }
+
+    // File input
+    fileInput.addEventListener('change', e => openFiles(e.target.files));
+
+    // Click on drop zone
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Drag & drop
+    ['dragenter', 'dragover'].forEach(ev => {
+      dropZone.addEventListener(ev, e => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      dropZone.addEventListener(ev, e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+      });
+    });
+    dropZone.addEventListener('drop', e => {
+      openFiles(e.dataTransfer.files);
+    });
+
+    // Also allow drop anywhere on body
+    document.body.addEventListener('dragover', e => e.preventDefault());
+    document.body.addEventListener('drop', e => {
+      e.preventDefault();
+      openFiles(e.dataTransfer.files);
+    });
+
+    // Close viewer
+    closeBtn.addEventListener('click', () => {
+      viewerWrap.classList.remove('visible');
+      dropZone.style.display = '';
+      kicanvas.removeAttribute('src');
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>

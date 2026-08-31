@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────
-# TrayForge Platform — 3 контейнера
+# TrayForge Platform — 4 контейнера
 # Запуск: docker compose up -d
 # ─────────────────────────────────────────────────
 services:
@@ -20,6 +20,8 @@ services:
         condition: service_started
       stencil-api:
         condition: service_healthy
+      kicanvas:
+        condition: service_started
 
   # ── TrayForge (статика) ──
   trayforge:
@@ -47,3 +49,9 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 3
+
+  # ── Gerber / KiCad Viewer (KiCanvas) ──
+  kicanvas:
+    image: ghcr.io/rostgg/trayforge-kicanvas:main
+    container_name: kicanvas
+    restart: unless-stopped
